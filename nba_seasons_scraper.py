@@ -8,7 +8,7 @@ import os
 NUM_SEASONS = 4
 INCLUDE_CURRENT_SEASON = True
 API_SLEEP_SECONDS = 1.5
-OUT_DIR = "nba_advanced_output"
+OUT_DIR = "data"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def get_recent_seasons(num_seasons=3, include_current=True) -> list[str]:
