@@ -1,4 +1,6 @@
+import os
 import pandas as pd
+import matplotlib.pyplot as plt
 from nba_seasons_scraper import get_recent_seasons, NUM_SEASONS, INCLUDE_CURRENT_SEASON, OUT_DIR
 
 def add_wl_column_from_games(stats_csv: list[str], games_csv: list[str], out_csv: list[str] = None) -> None:
@@ -66,10 +68,41 @@ def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = Non
 
     return stats
 
+def plot_correlations_with_win(dfs: list[pd.DataFrame], titles: list[str]) -> None:
+    if not os.path.exists(f"{OUT_DIR}/correlations"):
+        os.makedirs(f"{OUT_DIR}/correlations")
+    for df, title in zip(dfs, titles):
+        print(f"Plotting correlations for {title}...")
+        _plot_correlations_with_win(df, title)
+
+def _plot_correlations_with_win(df: pd.DataFrame, title: str) -> None:
+    """
+    Plots the pearson correlation for all useful numeric columns with the 'won' column.
+    """
+    numeric_columns = df.select_dtypes(include=['float64', 'int64'])
+    base_correlation = numeric_columns.corr()['won']
+    # removing useless columns like usagePercentage -> a team always uses 100% of its possessions in a game, and so it is a more useful player stat
+    pruned_correlation = base_correlation.drop('won').drop('gameId').drop('teamId').drop('usagePercentage')
+    correlation = pruned_correlation.sort_values(key=lambda s: s.abs(), ascending=False)
+
+    plt.figure(figsize=(10, 14))
+    correlation.sort_values().plot(kind="barh", color=["skyblue" if val > 0 else "salmon" for val in correlation.sort_values()])
+    plt.title("Correlation of Statistics with Winning")
+    plt.xlabel("Correlation")
+    plt.tight_layout()
+    plt.savefig(f"{OUT_DIR}/correlations/{title}.png")
+    # plt.show()
+
 if __name__ == "__main__":
+    # run_type = "add_wl"
+    run_type = "plot"
     seasons = get_recent_seasons(NUM_SEASONS, include_current=INCLUDE_CURRENT_SEASON)
     stats_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
-    games_csvs = [f"{OUT_DIR}/seasons/games_{season}.csv" for season in seasons]
-    out_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
-
-    add_wl_column_from_games(stats_csvs, games_csvs, out_csvs)
+    if run_type == "add_wl":
+        games_csvs = [f"{OUT_DIR}/seasons/games_{season}.csv" for season in seasons]
+        out_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
+        add_wl_column_from_games(stats_csvs, games_csvs, out_csvs)
+    elif run_type == "plot":
+        plot_correlations_with_win([pd.read_csv(csv) for csv in stats_csvs], seasons)
+    else:
+        raise ValueError(f"Unknown run_type: {run_type}")
