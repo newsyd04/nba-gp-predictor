@@ -95,14 +95,19 @@ def _plot_correlations_with_win(df: pd.DataFrame, title: str) -> None:
 
 if __name__ == "__main__":
     # run_type = "add_wl"
-    run_type = "plot"
+    # run_type = "plot_per_season"
+    run_type = "plot_combined"
     seasons = get_recent_seasons(NUM_SEASONS, include_current=INCLUDE_CURRENT_SEASON)
     stats_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
     if run_type == "add_wl":
         games_csvs = [f"{OUT_DIR}/seasons/games_{season}.csv" for season in seasons]
         out_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
         add_wl_column_from_games(stats_csvs, games_csvs, out_csvs)
-    elif run_type == "plot":
+    elif run_type == "plot_per_season":
         plot_correlations_with_win([pd.read_csv(csv) for csv in stats_csvs], seasons)
+    elif run_type == "plot_combined":
+        # plots data across all seasons combined into one correlation chart
+        combined_df = pd.concat([pd.read_csv(csv) for csv in stats_csvs], ignore_index=True)
+        _plot_correlations_with_win(combined_df, "combined_seasons")
     else:
         raise ValueError(f"Unknown run_type: {run_type}")
