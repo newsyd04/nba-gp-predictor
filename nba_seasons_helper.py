@@ -68,6 +68,63 @@ def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = Non
 
     return stats
 
+def build_team_csvs(seasons: list[str], stats_csvs: list[str]) -> None:
+    """
+    Creates team specific folders with CSVs for past seasons and current season.
+    """
+    teams_dir = os.path.join(OUT_DIR, "teams")
+    os.makedirs(teams_dir, exist_ok=True)
+
+    current_season = seasons[0]
+    past_seasons = seasons[1:]
+
+    season_dfs = {
+        season: pd.read_csv(csv).assign(season=season)
+        for season, csv in zip(seasons, stats_csvs)
+        if os.path.exists(csv)
+    }
+
+    # combine past seasons into one dataframe
+    past_df = pd.concat(
+        [season_dfs[s] for s in past_seasons if s in season_dfs],
+        ignore_index=True
+    )
+
+    current_df = season_dfs.get(current_season, pd.DataFrame())
+
+    # get all team abbreviations
+    all_teams = pd.concat([past_df, current_df])["teamTricode"].unique()
+
+    for team in all_teams:
+        _build_team_csvs_for_team(team, past_df, current_df, teams_dir)
+
+    print("Teams CSVs completed.")
+    print(f"{len(all_teams)} teams processed.")
+
+def _build_team_csvs_for_team(team: str, past_df: pd.DataFrame, current_df: pd.DataFrame, teams_dir: str) -> None:
+    """
+    Builds CSVs for a specific team in its own folder.
+    """
+    team_dir = os.path.join(teams_dir, team)
+    os.makedirs(team_dir, exist_ok=True)
+
+    # filter past and current
+    team_past = past_df[past_df["teamTricode"] == team]
+    team_current = current_df[current_df["teamTricode"] == team]
+
+    # paths
+    past_path = os.path.join(team_dir, "past_3_seasons.csv")
+    current_path = os.path.join(team_dir, "current_season.csv")
+
+    if not team_past.empty:
+        team_past.to_csv(past_path, index=False)
+
+    if not team_current.empty:
+        team_current.to_csv(current_path, index=False)
+
+    print(f"Built team folder for {team}: "
+            f"{len(team_past)} past rows, {len(team_current)} current rows")
+
 def plot_correlations_with_win(dfs: list[pd.DataFrame], titles: list[str]) -> None:
     if not os.path.exists(f"{OUT_DIR}/correlations"):
         os.makedirs(f"{OUT_DIR}/correlations")
@@ -95,14 +152,17 @@ def _plot_correlations_with_win(df: pd.DataFrame, title: str) -> None:
 
 if __name__ == "__main__":
     # run_type = "add_wl"
+    run_type = "build_team_csvs"
     # run_type = "plot_per_season"
-    run_type = "plot_combined"
+    # run_type = "plot_combined"
     seasons = get_recent_seasons(NUM_SEASONS, include_current=INCLUDE_CURRENT_SEASON)
     stats_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
     if run_type == "add_wl":
         games_csvs = [f"{OUT_DIR}/seasons/games_{season}.csv" for season in seasons]
         out_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
         add_wl_column_from_games(stats_csvs, games_csvs, out_csvs)
+    elif run_type == "build_team_csvs":
+        build_team_csvs(seasons, stats_csvs)
     elif run_type == "plot_per_season":
         plot_correlations_with_win([pd.read_csv(csv) for csv in stats_csvs], seasons)
     elif run_type == "plot_combined":
