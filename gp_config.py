@@ -1,16 +1,17 @@
 # gp_config.py
-import operator
-import math
-import random
-import functools
-
-import numpy as np
 
 # ---- FEATURE DEFINITIONS ----
-FEATURES = [
-    "delta_net_rating_3yr",
-    "delta_TS",
-    "delta_last10_ORtg",
-    "delta_last10_DRtg",
-    "delta_last10_TOV",
+ROLLING_COLUMNS = [
+    "netRating",
+    "PIE",
+    "trueShootingPercentage",
+    "effectiveFieldGoalPercentage",
+    "turnoverRatio",
+    "offensiveReboundPercentage",
+    "defensiveReboundPercentage",
+    "assistRatio"
 ]
+
+TRAIN_SEASONS  = [2021, 2022, 2023]
+TRAIN_CURRENT = 2024
+TEST_SEASON   = 2025
