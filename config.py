@@ -1,4 +1,11 @@
-# gp_config.py
+PARAMETERS = {
+    "population_size": 150,
+    "max_tree_height": 6,
+    "max_generations": 100,
+    "selection_method": "roulette",
+    "crossover_rate": 0.9,
+    "mutation_rate": 0.05
+}
 
 # ---- FEATURE DEFINITIONS ----
 ROLLING_COLUMNS = [

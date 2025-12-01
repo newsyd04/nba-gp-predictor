@@ -1,4 +1,5 @@
 import pandas as pd
+from config import PARAMETERS
 from data_loader import load_nba_data
 
 # need to find all files with form of data/XXXX-XX/XXXX-XX_table1.csv
