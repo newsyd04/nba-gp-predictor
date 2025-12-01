@@ -66,6 +66,14 @@ def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = Non
     if out_csv:
         stats.to_csv(out_csv, index=False)
 
+    # rename columns back to original
+    stats.rename(columns={
+        "GAME_ID": "gameId",
+        "TEAM_ID": "teamId",
+        "TEAM_ABBREVIATION": "teamTricode",
+        "WL": "wl"
+    }, inplace=True)
+
     return stats
 
 def build_team_csvs(seasons: list[str], stats_csvs: list[str]) -> None:
@@ -113,7 +121,7 @@ def _build_team_csvs_for_team(team: str, past_df: pd.DataFrame, current_df: pd.D
     team_current = current_df[current_df["teamTricode"] == team]
 
     # paths
-    past_path = os.path.join(team_dir, "past_3_seasons.csv")
+    past_path = os.path.join(team_dir, "past_seasons.csv")
     current_path = os.path.join(team_dir, "current_season.csv")
 
     if not team_past.empty:
@@ -150,11 +158,20 @@ def _plot_correlations_with_win(df: pd.DataFrame, title: str) -> None:
     plt.savefig(f"{OUT_DIR}/correlations/{title}.png")
     # plt.show()
 
+def _print_correlations_with_win(df: pd.DataFrame, title: str) -> None:
+    numeric_columns = df.select_dtypes(include=['float64', 'int64'])
+    base_correlation = numeric_columns.corr()['won']
+    pruned_correlation = base_correlation.drop('won').drop('gameId').drop('teamId').drop('usagePercentage')
+    correlation = pruned_correlation.sort_values(key=lambda s: s, ascending=False)
+    print(f"Correlation of Statistics with Winning ({title}):")
+    print(correlation)
+
 if __name__ == "__main__":
     # run_type = "add_wl"
-    run_type = "build_team_csvs"
-    # run_type = "plot_per_season"
-    # run_type = "plot_combined"
+    # run_type = "build_team_csvs"
+    # run_type = "plot_correlation_per_season"
+    # run_type = "plot_correlation_combined"
+    run_type = "print_correlation_combined"
     seasons = get_recent_seasons(NUM_SEASONS, include_current=INCLUDE_CURRENT_SEASON)
     stats_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
     if run_type == "add_wl":
@@ -163,11 +180,14 @@ if __name__ == "__main__":
         add_wl_column_from_games(stats_csvs, games_csvs, out_csvs)
     elif run_type == "build_team_csvs":
         build_team_csvs(seasons, stats_csvs)
-    elif run_type == "plot_per_season":
+    elif run_type == "plot_correlation_per_season":
         plot_correlations_with_win([pd.read_csv(csv) for csv in stats_csvs], seasons)
-    elif run_type == "plot_combined":
+    elif run_type == "plot_correlation_combined":
         # plots data across all seasons combined into one correlation chart
         combined_df = pd.concat([pd.read_csv(csv) for csv in stats_csvs], ignore_index=True)
         _plot_correlations_with_win(combined_df, "combined_seasons")
+    elif run_type == "print_correlation_combined":
+        combined_df = pd.concat([pd.read_csv(csv) for csv in stats_csvs], ignore_index=True)
+        _print_correlations_with_win(combined_df, "combined_seasons")
     else:
         raise ValueError(f"Unknown run_type: {run_type}")

@@ -5,7 +5,7 @@ from datetime import date
 from tqdm import tqdm
 import os
 
-NUM_SEASONS = 4
+NUM_SEASONS = 5
 INCLUDE_CURRENT_SEASON = True
 API_SLEEP_SECONDS = 1.5
 OUT_DIR = "data"
@@ -41,7 +41,7 @@ def fetch_games_for_seasons(season_list: list[str]) -> pd.DataFrame:
         unique_games = df[['GAME_ID','GAME_DATE','TEAM_ID','TEAM_ABBREVIATION','MATCHUP','WL']].drop_duplicates(subset='GAME_ID')
         # adds a season column to the dataframe with the current season
         unique_games['SEASON'] = season
-        unique_games.to_csv(os.path.join(OUT_DIR, f"games_{season}.csv"), index=False)
+        unique_games.to_csv(os.path.join(OUT_DIR, 'seasons', f"games_{season}.csv"), index=False)
         season_frames.append(unique_games)
         time.sleep(API_SLEEP_SECONDS)
     return pd.concat(season_frames, ignore_index=True)
@@ -120,12 +120,13 @@ def main() -> None:
     already_completed = True
     complete_seasons_dir = os.path.join(OUT_DIR, 'seasons')
     seasons = get_recent_seasons(NUM_SEASONS, include_current=INCLUDE_CURRENT_SEASON)
+    not_completed_seasons = []
     for season in seasons:
         if not os.path.exists(os.path.join(complete_seasons_dir, f"games_{season}.csv")):
             already_completed = False
-            break
+            not_completed_seasons.append(season)
     if not already_completed:
-        games_df = fetch_games_for_seasons(seasons)
+        games_df = fetch_games_for_seasons(not_completed_seasons)
         print(f"Found {len(games_df['GAME_ID'].unique())} unique games for those seasons.")
     else:
         print(f"Seasons already completed.")
