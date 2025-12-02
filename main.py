@@ -7,6 +7,13 @@ from selection.roulette import RouletteSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
 
+def get_sorted_by_fitness(population, targets, data, variables):
+    return sorted(
+        population,
+        key=lambda ind: fitness(ind, targets, data, variables),
+        reverse=True
+    )
+
 if __name__ == "__main__":
     variables, train_data_raw, test_data_raw = load_nba_data(TABLE_PATH)
     population = make_population(
@@ -24,25 +31,30 @@ if __name__ == "__main__":
 
     for generation in range(1, PARAMETERS["max_generations"] + 1):
         fitness_scores = [fitness(individual, train_target_outputs, train_data, variables) for individual in population]
-        current_average_fitness = average_fitness(population, train_target_outputs, train_data, variables)
-        average_fitness_history.append(current_average_fitness)
-        best_fitness, best_individual = max_fitness(population, train_target_outputs, train_data, variables)
-        max_fitness_history.append(best_fitness)
-        print(f"Generation {generation}: Average Fitness = {current_average_fitness:.4f}, Max Fitness = {best_fitness:.4f}")
-        print("Best Individual:", best_individual.to_string())
+        gen_current_average_fitness = average_fitness(population, train_target_outputs, train_data, variables)
+        average_fitness_history.append(gen_current_average_fitness)
+        gen_best_fitness, gen_best_individual = max_fitness(population, train_target_outputs, train_data, variables)
+        max_fitness_history.append(gen_best_fitness)
+        print(f"Generation {generation}: Average Fitness = {gen_current_average_fitness:.4f}, Max Fitness = {gen_best_fitness:.4f}")
+        print("Best Individual:", gen_best_individual.to_string())
 
         # if max_fitness >= 0.9: # fitness threshold
         #     print("Optimal solution found!")
         #     break
+        
+        # elitism
+        ELITE_COUNT = int(PARAMETERS["elitism_rate"]) 
+        sorted_pop = get_sorted_by_fitness(population, train_target_outputs, train_data, variables)
+        elites = sorted_pop[:ELITE_COUNT]
 
         # selection
         selector = RouletteSelection()
         parents = selector.create_parents_pool(population, fitness_scores)
         # crossover
-        children = run_crossover(parents, PARAMETERS["population_size"], PARAMETERS["crossover_rate"])
+        children = run_crossover(parents, PARAMETERS["population_size"]  - ELITE_COUNT, PARAMETERS["crossover_rate"])
         # mutations
         mutated_children = run_mutations(children, PARAMETERS["max_tree_height"], PARAMETERS["mutation_rate"])
-        population = mutated_children
+        population = elites + mutated_children
 
     print("The process is completed")
     print("Elapsed generations: ", generation)
@@ -52,9 +64,6 @@ if __name__ == "__main__":
     
     # extract best model after evolution
     best_fitness, best_tree = max_fitness(population, train_target_outputs, train_data, variables)
-
-    # get test labels
-    test_targets = [row[-1] for row in test_data]  # before you removed target
 
     # get predictions
     test_preds = get_predictions(best_tree, test_data, variables)

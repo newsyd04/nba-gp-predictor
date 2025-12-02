@@ -4,7 +4,8 @@ PARAMETERS = {
     "max_generations": 100,
     "selection_method": "roulette",
     "crossover_rate": 0.9,
-    "mutation_rate": 0.05
+    "mutation_rate": 0.05,
+    "elitism_rate": 5
 }
 
 # ---- FEATURE DEFINITIONS ----
