@@ -17,6 +17,12 @@ def get_predictions(tree: Tree, data: list[list[float]], variables: list[str]) -
     return predictions
 
 def sigmoid(x: float) -> float:
+    # prevents overflow for large positive x
+    if x > 50:
+        return 1.0
+    # prevents underflow for large negative x
+    if x < -50:
+        return 0.0
     return 1 / (1 + math.exp(-x))
 
 # -1/N summation(y*log(p) + (1-y)*log(1-p))

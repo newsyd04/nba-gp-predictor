@@ -1,6 +1,6 @@
 from tree.tree import Tree
 
-def make_population(size: int, max_tree_height: int) -> list:
+def make_population(size: int, max_tree_height: int, variables: list[str]) -> list:
     population = []
 
     base = size // max_tree_height
@@ -15,7 +15,7 @@ def make_population(size: int, max_tree_height: int) -> list:
             remainder -= 1
 
     for i, height in enumerate(heights):
-        tree = Tree()
+        tree = Tree(variables=variables)
         # half grow and half full
         if i % 2 == 0:
             # grow method

@@ -3,8 +3,9 @@ from tree.tree_node import TreeNode
 from config import OPERATIONS, TERMINALS, ROLLING_COLUMNS
 
 class Tree:
-    def __init__(self, node_value=None, current_depth=1):
+    def __init__(self, node_value=None, current_depth=1, variables=None):
         self.root = TreeNode(node_value, current_depth=current_depth)
+        self.variables = variables
 
     def to_string(self) -> str:
         return self._to_string_helper(self.root)
@@ -47,7 +48,7 @@ class Tree:
         else:
             choice = random.choice(TERMINALS)
             if choice == 'var':
-                node.value = random.choice(ROLLING_COLUMNS)
+                node.value = random.choice(self.variables)
             else:
                 node.value = round(random.uniform(-10, 10), 2)
 
@@ -65,6 +66,6 @@ class Tree:
         else:
             choice = random.choice(TERMINALS)
             if choice == 'var':
-                node.value = random.choice(ROLLING_COLUMNS)
+                node.value = random.choice(self.variables)
             else:
                 node.value = round(random.uniform(-10, 10), 2)
