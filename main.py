@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
 from population import make_population
@@ -6,7 +7,6 @@ from fitness import fitness, average_fitness, max_fitness, get_predictions
 from selection.roulette import RouletteSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
-import time
 
 def get_sorted_by_fitness(population, targets, data, variables):
     return sorted(
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     t_setup_start = time.time()
     variables, train_data_raw, test_data_raw = load_nba_data(TABLE_PATH)
     population = make_population(
-        PARAMETERS["population_size"], 
+        PARAMETERS["population_size"],
         PARAMETERS["max_tree_height"],
         variables
     )
@@ -36,41 +36,65 @@ if __name__ == "__main__":
     for generation in range(1, PARAMETERS["max_generations"] + 1):
         print(f"Generation {generation}")
         t_gen_start = time.time()
+
+        # compute fitness scores
         t_fit_start = time.time()
         fitness_scores = [fitness(individual, train_target_outputs, train_data, variables) for individual in population]
-        gen_current_average_fitness = average_fitness(population, train_target_outputs, train_data, variables)
-        average_fitness_history.append(gen_current_average_fitness)
-        gen_best_fitness, gen_best_individual = max_fitness(population, train_target_outputs, train_data, variables)
+        t_fit_end = time.time()
+        print(f"Fitness calculation took {t_fit_end - t_fit_start:.2f} seconds.")
+
+        # average fitness
+        t_current_avg_fitness_start = time.time()
+        current_average_fitness = average_fitness(fitness_scores, population)
+        t_current_avg_fitness_end = time.time()
+        print(f"Average fitness calculation took {t_current_avg_fitness_end - t_current_avg_fitness_start:.2f} seconds.")
+        average_fitness_history.append(current_average_fitness)
+
+        # max fitness
+        t_max_fitness_start = time.time()
+        gen_best_fitness, gen_best_individual = max_fitness(fitness_scores, population)
+        t_max_fitness_end = time.time()
+        print(f"Max fitness calculation took {t_max_fitness_end - t_max_fitness_start:.2f} seconds.")
         max_fitness_history.append(gen_best_fitness)
-        print(f"Generation {generation}: Average Fitness = {gen_current_average_fitness:.4f}, Max Fitness = {gen_best_fitness:.4f}")
+
+        print(f"Generation {generation}: Average Fitness = {current_average_fitness:.4f}, Max Fitness = {gen_best_fitness:.4f}")
         print("Best Individual:", gen_best_individual.to_string())
 
-        # if max_fitness >= 0.9: # fitness threshold
-        #     print("Optimal solution found!")
-        #     break
+        # early stopping
+        if gen_best_fitness >= 0.9:
+            print("Optimal solution found!")
+            break
         
         # elitism
-        ELITE_COUNT = int(PARAMETERS["elitism_rate"]) 
+        ELITE_COUNT = int(PARAMETERS["elitism_rate"])
         sorted_pop = get_sorted_by_fitness(population, train_target_outputs, train_data, variables)
         elites = sorted_pop[:ELITE_COUNT]
 
         # selection
+        t_operations_start = time.time()
         selector = RouletteSelection()
         parents = selector.create_parents_pool(population, fitness_scores)
+
         # crossover
-        children = run_crossover(parents, PARAMETERS["population_size"]  - ELITE_COUNT, PARAMETERS["crossover_rate"])
-        # mutations
+        children = run_crossover(parents, PARAMETERS["population_size"] - ELITE_COUNT, PARAMETERS["crossover_rate"])
+
+        # mutation
         mutated_children = run_mutations(children, PARAMETERS["max_tree_height"], PARAMETERS["mutation_rate"])
+
+        # next generation
         population = elites + mutated_children
+        t_operations_end = time.time()
+        print(f"Selection, Crossover, and Mutation took {t_operations_end - t_operations_start:.2f} seconds.")
+
+        t_gen_end = time.time()
+        print(f"Generation {generation} took {t_gen_end - t_gen_start:.2f} seconds.\n")
 
     print("The process is completed")
     print("Elapsed generations: ", generation)
     print(average_fitness_history)
     
-    
-    
     # extract best model after evolution
-    best_fitness, best_tree = max_fitness(population, train_target_outputs, train_data, variables)
+    best_fitness, best_tree = max_fitness(fitness_scores, population)
 
     # get predictions
     test_preds = get_predictions(best_tree, test_data, variables)
@@ -81,30 +105,3 @@ if __name__ == "__main__":
 
     print("Test accuracy:", test_accuracy)
     print("Best Tree Expression:", best_tree.to_string())
-    # plot_average_and_max_fitness_history(average_fitness_history, max_fitness_history)
-    # best_individuals_predictions = get_predictions(best_individual, data, variables)
-    # plot_target_vs_final_prediction(target_outputs, best_individuals_predictions)
-    # plot_target_vs_final_prediction_2d(target_outputs, best_individuals_predictions)
-    # best_individual_func = best_individual.to_string()
-    # plot_target_vs_final_prediction_functions(target_expression, best_individual_func)
-
-# need to find all files with form of data/XXXX-XX/XXXX-XX_table1.csv
-
-# print("Feature Variables:", variables)
-# print("Number of Features:", len(variables))
-
-# print("Train length:", len(train_data))
-# print("Test length:", len(test_data))
-
-# print(f"First train row ({len(train_data[0])} columns):", train_data[0])
-# print(f"First five train row targets:", [train_data[i][-1] for i in range(5)])
-# print(f"First test row ({len(test_data[0])} columns):", test_data[0])
-
-# print("Train target mean:", sum(row[-1] for row in train_data) / len(train_data))
-# print("Test target mean:", sum(row[-1] for row in test_data) / len(test_data))
-
-# train_data = pd.DataFrame(train_data, columns=variables + ["target"]) 
-# test_data = pd.DataFrame(test_data, columns=variables + ["target"])
-# print(train_data.head())
-# print(test_data.head())
-
