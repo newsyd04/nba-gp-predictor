@@ -3,17 +3,10 @@ import time
 from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
 from population import make_population
-from fitness import fitness, average_fitness, max_fitness, get_predictions
+from fitness import fitness, average_fitness, max_fitness, get_predictions, get_population_sorted_by_fitness
 from selection.roulette import RouletteSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
-
-def get_sorted_by_fitness(population, targets, data, variables):
-    return sorted(
-        population,
-        key=lambda ind: fitness(ind, targets, data, variables),
-        reverse=True
-    )
 
 if __name__ == "__main__":
     t_setup_start = time.time()
@@ -66,9 +59,12 @@ if __name__ == "__main__":
             break
         
         # elitism
+        t_elite_start = time.time()
         ELITE_COUNT = int(PARAMETERS["elitism_rate"])
-        sorted_pop = get_sorted_by_fitness(population, train_target_outputs, train_data, variables)
-        elites = sorted_pop[:ELITE_COUNT]
+        sorted_pop = get_population_sorted_by_fitness(population, fitness_scores)
+        elites = [individual for individual, _ in sorted_pop[:ELITE_COUNT]]
+        t_elite_end = time.time()
+        print(f"Elitism selection took {t_elite_end - t_elite_start:.2f} seconds.")
 
         # selection
         t_operations_start = time.time()

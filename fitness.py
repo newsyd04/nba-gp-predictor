@@ -51,6 +51,11 @@ def max_fitness(fitness_scores: list[float], population: list[Tree]) -> tuple[fl
             max_individual = individual
     return max_fit, max_individual
 
+def get_population_sorted_by_fitness(population: list[Tree], fitness_scores: list[float]) -> list[tuple[Tree, float]]:
+    paired = list(zip(population, fitness_scores))
+    paired.sort(key=lambda x: x[1], reverse=True)
+    return paired
+
 def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -> float:
     if node is None:
         return 0
