@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
 from population import make_population
@@ -8,33 +9,48 @@ from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
 
 if __name__ == "__main__":
+    t_setup_start = time.time()
     variables, train_data_raw, test_data_raw = load_nba_data(TABLE_PATH)
     population = make_population(
         PARAMETERS["population_size"], 
         PARAMETERS["max_tree_height"],
         variables
     )
-    # remove the target column from train and test
+    # removing the target column from train and test
     train_target_outputs = [row[-1] for row in train_data_raw]
     train_data = [row[:-1] for row in train_data_raw]
     test_data = [row[:-1] for row in test_data_raw]
     test_targets = [row[-1] for row in test_data_raw]
     average_fitness_history = []
     max_fitness_history = []
+    t_setup_end = time.time()
+    print(f"Data loading and population initialization took {t_setup_end - t_setup_start:.2f} seconds.")
 
     for generation in range(1, PARAMETERS["max_generations"] + 1):
+        print(f"Generation {generation}")
+        t_gen_start = time.time()
+        t_fit_start = time.time()
         fitness_scores = [fitness(individual, train_target_outputs, train_data, variables) for individual in population]
-        current_average_fitness = average_fitness(population, train_target_outputs, train_data, variables)
+        t_fit_end = time.time()
+        print(f"Fitness calculation took {t_fit_end - t_fit_start:.2f} seconds.")
+        t_current_avg_fitness_start = time.time()
+        current_average_fitness = average_fitness(fitness_scores, population)
+        t_current_avg_fitness_end = time.time()
+        print(f"Average fitness calculation took {t_current_avg_fitness_end - t_current_avg_fitness_start:.2f} seconds.")
         average_fitness_history.append(current_average_fitness)
-        best_fitness, best_individual = max_fitness(population, train_target_outputs, train_data, variables)
+        t_max_fitness_start = time.time()
+        best_fitness, best_individual = max_fitness(fitness_scores, population)
+        t_max_fitness_end = time.time()
+        print(f"Max fitness calculation took {t_max_fitness_end - t_max_fitness_start:.2f} seconds.")
         max_fitness_history.append(best_fitness)
-        print(f"Generation {generation}: Average Fitness = {current_average_fitness:.4f}, Max Fitness = {best_fitness:.4f}")
+        print(f"Average Fitness = {current_average_fitness:.4f}, Max Fitness = {best_fitness:.4f}")
         print("Best Individual:", best_individual.to_string())
 
-        # if max_fitness >= 0.9: # fitness threshold
-        #     print("Optimal solution found!")
-        #     break
+        if best_fitness >= 0.9: # fitness threshold
+             print("Optimal solution found!")
+             break
 
+        t_operations_start = time.time()
         # selection
         selector = RouletteSelection()
         parents = selector.create_parents_pool(population, fitness_scores)
@@ -43,6 +59,10 @@ if __name__ == "__main__":
         # mutations
         mutated_children = run_mutations(children, PARAMETERS["max_tree_height"], PARAMETERS["mutation_rate"])
         population = mutated_children
+        t_operations_end = time.time()
+        print(f"Selection, Crossover, and Mutation took {t_operations_end - t_operations_start:.2f} seconds.")
+        t_gen_end = time.time()
+        print(f"Generation {generation} took {t_gen_end - t_gen_start:.2f} seconds.\n")
 
     print("The process is completed")
     print("Elapsed generations: ", generation)
