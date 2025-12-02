@@ -6,6 +6,7 @@ from fitness import fitness, average_fitness, max_fitness, get_predictions
 from selection.roulette import RouletteSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
+import time
 
 def get_sorted_by_fitness(population, targets, data, variables):
     return sorted(
@@ -15,21 +16,27 @@ def get_sorted_by_fitness(population, targets, data, variables):
     )
 
 if __name__ == "__main__":
+    t_setup_start = time.time()
     variables, train_data_raw, test_data_raw = load_nba_data(TABLE_PATH)
     population = make_population(
         PARAMETERS["population_size"], 
         PARAMETERS["max_tree_height"],
         variables
     )
-    # remove the target column from train and test
+    # removing the target column from train and test
     train_target_outputs = [row[-1] for row in train_data_raw]
     train_data = [row[:-1] for row in train_data_raw]
     test_data = [row[:-1] for row in test_data_raw]
     test_targets = [row[-1] for row in test_data_raw]
     average_fitness_history = []
     max_fitness_history = []
+    t_setup_end = time.time()
+    print(f"Data loading and population initialization took {t_setup_end - t_setup_start:.2f} seconds.")
 
     for generation in range(1, PARAMETERS["max_generations"] + 1):
+        print(f"Generation {generation}")
+        t_gen_start = time.time()
+        t_fit_start = time.time()
         fitness_scores = [fitness(individual, train_target_outputs, train_data, variables) for individual in population]
         gen_current_average_fitness = average_fitness(population, train_target_outputs, train_data, variables)
         average_fitness_history.append(gen_current_average_fitness)

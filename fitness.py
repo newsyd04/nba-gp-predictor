@@ -40,21 +40,14 @@ def cross_entropy_loss(predictions: list[float], targets: list[float]) -> float:
 def _fitness(loss: float) -> float:
     return 1 / (1 + loss)
 
-def total_fitness(population: list[Tree], target_outputs: list[float], data: list[list[float]], variables: list[str]) -> float:
-    total = 0.0
-    for individual in population:
-        total += fitness(individual, target_outputs, data, variables)
-    return total
+def average_fitness(fitness_scores: list[float], population: list[Tree]) -> float:
+    return sum(fitness_scores) / len(population)
 
-def average_fitness(population: list[Tree], target_outputs: list[float], data: list[list[float]], variables: list[str]) -> float:
-    return total_fitness(population, target_outputs, data, variables) / len(population)
-
-def max_fitness(population: list[Tree], target_outputs: list[float], data: list[list[float]], variables: list[str]) -> tuple[float, Tree | None]:
+def max_fitness(fitness_scores: list[float], population: list[Tree]) -> tuple[float, Tree | None]:
     max_fit, max_individual = float('-inf'), None
-    for individual in population:
-        fit = fitness(individual, target_outputs, data, variables)
-        if fit > max_fit:
-            max_fit = fit
+    for score, individual in zip(fitness_scores, population):
+        if score > max_fit:
+            max_fit = score
             max_individual = individual
     return max_fit, max_individual
 
