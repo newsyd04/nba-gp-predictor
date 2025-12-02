@@ -1,24 +1,70 @@
 import pandas as pd
-from config import PARAMETERS
+from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
+from population import make_population
+from fitness import fitness, average_fitness, max_fitness
+from selection.roulette import RouletteSelection
+from evolve.crossover import run_crossover
+from evolve.mutation import run_mutations
+
+if __name__ == "__main__":
+    variables, train_data, test_data = load_nba_data(TABLE_PATH)
+    population = make_population(PARAMETERS["population_size"], PARAMETERS["max_tree_height"])
+    # remove the target column from train and test
+    train_target_outputs = [row[-1] for row in train_data]
+    train_data = [row[:-1] for row in train_data]
+    test_data = [row[:-1] for row in test_data]
+    average_fitness_history = []
+    max_fitness_history = []
+
+    for generation in range(1, PARAMETERS["max_generations"] + 1):
+        fitness_scores = [fitness(individual, train_target_outputs, train_data, variables) for individual in population]
+        current_average_fitness = average_fitness(population, train_target_outputs, train_data, variables)
+        average_fitness_history.append(current_average_fitness)
+        max_fitness, best_individual = max_fitness(population, train_target_outputs, train_data, variables)
+        max_fitness_history.append(max_fitness)
+        print(f"Generation {generation}: Average Fitness = {current_average_fitness:.4f}, Max Fitness = {max_fitness:.4f}")
+        print("Best Individual:", best_individual.to_string())
+
+        # if max_fitness >= 0.9: # fitness threshold
+        #     print("Optimal solution found!")
+        #     break
+
+        # selection
+        selector = RouletteSelection()
+        parents = selector.create_parents_pool(population, fitness_scores)
+        # crossover
+        children = run_crossover(parents, PARAMETERS["population_size"], PARAMETERS["crossover_rate"])
+        # mutations
+        mutated_children = run_mutations(children, PARAMETERS["mutation_rate"])
+        population = mutated_children
+
+    print("The process is completed")
+    print("Elapsed generations: ", generation)
+    print(average_fitness_history)
+    # plot_average_and_max_fitness_history(average_fitness_history, max_fitness_history)
+    # best_individuals_predictions = get_predictions(best_individual, data, variables)
+    # plot_target_vs_final_prediction(target_outputs, best_individuals_predictions)
+    # plot_target_vs_final_prediction_2d(target_outputs, best_individuals_predictions)
+    # best_individual_func = best_individual.to_string()
+    # plot_target_vs_final_prediction_functions(target_expression, best_individual_func)
 
 # need to find all files with form of data/XXXX-XX/XXXX-XX_table1.csv
-path = "data/*/*_table1.csv"
-variables, train_data, test_data = load_nba_data(path)
 
-print("Feature Variables:", variables)
-print("Number of Features:", len(variables))
+# print("Feature Variables:", variables)
+# print("Number of Features:", len(variables))
 
-print("Train length:", len(train_data))
-print("Test length:", len(test_data))
+# print("Train length:", len(train_data))
+# print("Test length:", len(test_data))
 
-print(f"First train row ({len(train_data[0])} columns):", train_data[0])
-print(f"First test row ({len(test_data[0])} columns):", test_data[0])
+# print(f"First train row ({len(train_data[0])} columns):", train_data[0])
+# print(f"First five train row targets:", [train_data[i][-1] for i in range(5)])
+# print(f"First test row ({len(test_data[0])} columns):", test_data[0])
 
-print("Train target mean:", sum(row[-1] for row in train_data) / len(train_data))
-print("Test target mean:", sum(row[-1] for row in test_data) / len(test_data))
+# print("Train target mean:", sum(row[-1] for row in train_data) / len(train_data))
+# print("Test target mean:", sum(row[-1] for row in test_data) / len(test_data))
 
-train_data = pd.DataFrame(train_data, columns=variables + ["target"]) 
-test_data = pd.DataFrame(test_data, columns=variables + ["target"])
-print(train_data.head())
-print(test_data.head())
+# train_data = pd.DataFrame(train_data, columns=variables + ["target"]) 
+# test_data = pd.DataFrame(test_data, columns=variables + ["target"])
+# print(train_data.head())
+# print(test_data.head())

@@ -1,6 +1,6 @@
 import random
 from tree.tree_node import TreeNode
-from gp_config import OPERATIONS, TERMINALS
+from config import OPERATIONS, TERMINALS, ROLLING_COLUMNS
 
 class Tree:
     def __init__(self, node_value=None, current_depth=1):
@@ -37,7 +37,7 @@ class Tree:
         self.root = TreeNode(None, current_depth=current_depth)
         self._grow(self.root, current_depth, max_depth)
 
-    def _grow(self, node: TreeNode, current_depth: int, max_depth: int, operations: list[str]):
+    def _grow(self, node: TreeNode, current_depth: int, max_depth: int):
         if current_depth < max_depth and random.random() < 0.7:
                 node.value = random.choice(OPERATIONS)
                 node.left = TreeNode(None, current_depth + 1)
@@ -45,7 +45,11 @@ class Tree:
                 self._grow(node.left, current_depth + 1, max_depth)
                 self._grow(node.right, current_depth + 1, max_depth)
         else:
-            node.value = random.choice(TERMINALS)
+            choice = random.choice(TERMINALS)
+            if choice == 'var':
+                node.value = random.choice(ROLLING_COLUMNS)
+            else:
+                node.value = round(random.uniform(-10, 10), 2)
 
     def full(self, max_depth: int):
         self.root = TreeNode(None, current_depth=1)
@@ -59,4 +63,8 @@ class Tree:
             self._full(node.left, current_depth + 1, max_depth)
             self._full(node.right, current_depth + 1, max_depth)
         else:
-            node.value = random.choice(TERMINALS)
+            choice = random.choice(TERMINALS)
+            if choice == 'var':
+                node.value = random.choice(ROLLING_COLUMNS)
+            else:
+                node.value = round(random.uniform(-10, 10), 2)

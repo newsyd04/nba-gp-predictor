@@ -1,6 +1,6 @@
 import glob
 import pandas as pd
-from gp_config import ROLLING_COLUMNS, TRAIN_SEASONS, TRAIN_CURRENT, TEST_SEASON
+from config import ROLLING_COLUMNS, TRAIN_SEASONS, TRAIN_CURRENT, TEST_SEASON
 
 def load_all_games_data(path: str) -> pd.DataFrame:
     """

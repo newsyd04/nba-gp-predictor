@@ -22,3 +22,8 @@ ROLLING_COLUMNS = [
 TRAIN_SEASONS  = [2021, 2022, 2023]
 TRAIN_CURRENT = 2024
 TEST_SEASON   = 2025
+
+TABLE_PATH = "data/*/*_table1.csv"
+
+OPERATIONS = ['+', '-', '*', '/']
+TERMINALS = ['var', 'const']
