@@ -17,9 +17,24 @@ def crossover(mrParent: Tree, msParent: Tree) -> tuple[Tree, Tree]:
     node1 = awesomeSon.random_node()
     node2 = greatDaughter.random_node()
 
-    node1.value, node2.value = node2.value, node1.value
-    node1.left, node2.left = node2.left, node1.left
-    node1.right, node2.right = node2.right, node1.right
+    parent1 = awesomeSon.find_parent(node1)
+    parent2 = greatDaughter.find_parent(node2)
+
+    if parent1 is None:
+        awesomeSon.root = node2
+    else:
+        if parent1.left is node1:
+            parent1.left = node2
+        else:
+            parent1.right = node2
+
+    if parent2 is None:
+        greatDaughter.root = node1
+    else:
+        if parent2.left is node2:
+            parent2.left = node1
+        else:
+            parent2.right = node1
 
     return awesomeSon, greatDaughter
 
@@ -32,7 +47,8 @@ def run_crossover(parents_pool: list[Tree], num_children: int, crossover_rate=1.
         if should_apply_crossover(crossover_rate):
             awesomeSon, greatDaughter = crossover(mrParent, msParent)
         else:
-            awesomeSon, greatDaughter = mrParent, msParent
+            awesomeSon = copy.deepcopy(mrParent)
+            greatDaughter = copy.deepcopy(msParent)
 
         children.append(awesomeSon)
         if len(children) < num_children:

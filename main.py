@@ -5,7 +5,7 @@ import multiprocessing as mp
 from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
 from population import make_population
-from fitness import fitness_worker, average_fitness, max_fitness, get_predictions, get_population_sorted_by_fitness
+from fitness import fitness_worker, average_fitness, max_fitness, get_predictions, get_population_sorted_by_fitness, cross_entropy_loss
 from selection.roulette import RouletteSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     train_data = [row[:-1] for row in train_data_raw]
     test_data = [row[:-1] for row in test_data_raw]
     test_targets = [row[-1] for row in test_data_raw]
+    print(f"Test size: {len(test_targets)}")
     average_fitness_history = []
     max_fitness_history = []
     t_setup_end = time.time()
@@ -110,8 +111,10 @@ if __name__ == "__main__":
     test_preds = get_predictions(best_tree, test_data, variables)
     test_labels = [1 if p > 0.5 else 0 for p in test_preds]
 
-    # compute accuracy
+    # compute loss and accuracy
+    test_loss = cross_entropy_loss(test_preds, test_targets)
     test_accuracy = sum(a == b for a, b in zip(test_labels, test_targets)) / len(test_targets)
 
+    print("Test loss:", test_loss)
     print("Test accuracy:", test_accuracy)
     print("Best Tree Expression:", best_tree.to_string())

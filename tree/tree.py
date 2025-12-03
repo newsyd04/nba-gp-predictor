@@ -33,6 +33,23 @@ class Tree:
         nodes += self._collect_nodes(node.left)
         nodes += self._collect_nodes(node.right)
         return nodes
+    
+    def find_parent(self, target: TreeNode) -> TreeNode | None:
+        if self.root is target:
+            return None
+        return self._find_parent_helper(self.root, target)
+
+    def _find_parent_helper(self, current: TreeNode, target: TreeNode) -> TreeNode | None:
+        if current is None:
+            return None
+        if current.left is target or current.right is target:
+            return current
+
+        left = self._find_parent_helper(current.left, target)
+        if left:
+            return left
+
+        return self._find_parent_helper(current.right, target)
 
     def grow(self, max_depth: int, current_depth=1):
         self.root = TreeNode(None, current_depth=current_depth)
