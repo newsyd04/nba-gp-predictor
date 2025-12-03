@@ -1,11 +1,22 @@
 import math
+import time
 from tree.tree import Tree
 from tree.tree_node import TreeNode
 
-def fitness(individual: Tree, target_outputs: list[int], data: list[list[float]], variables: list[str]) -> float:
+def fitness_worker(args: tuple[Tree, list[int], list[list[float]], list[str]]) -> tuple[float, float, float]:
+    individual, train_target_outputs, train_data, variables = args
+    return fitness(individual, train_target_outputs, train_data, variables)
+
+def fitness(individual: Tree, target_outputs: list[int], data: list[list[float]], variables: list[str]) -> tuple[float, float, float]:
+    t_predictions_start = time.time()
     predictions = get_predictions(individual, data, variables)
+    t_predictions_end = time.time()
+    t_predictions_duration = t_predictions_end - t_predictions_start
+    t_loss_start = time.time()
     loss = cross_entropy_loss(predictions, target_outputs)
-    return _fitness(loss)
+    t_loss_end = time.time()
+    t_loss_duration = t_loss_end - t_loss_start
+    return _fitness(loss, t_predictions_duration, t_loss_duration)
 
 def get_predictions(tree: Tree, data: list[list[float]], variables: list[str]) -> list[float]:
     predictions = []
@@ -37,8 +48,8 @@ def cross_entropy_loss(predictions: list[float], targets: list[float]) -> float:
         total += -(y * math.log(p) + (1 - y) * math.log(1 - p))
     return total / len(predictions)
 
-def _fitness(loss: float) -> float:
-    return 1 / (1 + loss)
+def _fitness(loss: float, prediction_time: float, loss_time: float) -> tuple[float, float, float]:
+    return 1 / (1 + loss), prediction_time, loss_time
 
 def average_fitness(fitness_scores: list[float], population: list[Tree]) -> float:
     return sum(fitness_scores) / len(population)

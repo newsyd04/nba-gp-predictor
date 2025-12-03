@@ -1,12 +1,15 @@
 import pandas as pd
 import time
+from concurrent.futures import ProcessPoolExecutor
+import multiprocessing as mp
 from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
 from population import make_population
-from fitness import fitness, average_fitness, max_fitness, get_predictions, get_population_sorted_by_fitness
+from fitness import fitness_worker, average_fitness, max_fitness, get_predictions, get_population_sorted_by_fitness
 from selection.roulette import RouletteSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
+from plot_results import plot_average_and_max_fitness_history
 
 if __name__ == "__main__":
     t_setup_start = time.time()
@@ -32,8 +35,16 @@ if __name__ == "__main__":
 
         # compute fitness scores
         t_fit_start = time.time()
-        fitness_scores = [fitness(individual, train_target_outputs, train_data, variables) for individual in population]
+        with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
+            results = list(
+                executor.map(
+                    fitness_worker,
+                    [(individual, train_target_outputs, train_data, variables) for individual in population]
+                )
+            )
+        fitness_scores, prediction_times, loss_times = zip(*results)
         t_fit_end = time.time()
+        print(f"Total fitness time without concurrency: {(sum(prediction_times) + sum(loss_times)):.2f} seconds.")
         print(f"Fitness calculation took {t_fit_end - t_fit_start:.2f} seconds.")
 
         # average fitness
@@ -57,7 +68,7 @@ if __name__ == "__main__":
         if gen_best_fitness >= 0.9:
             print("Optimal solution found!")
             break
-        
+
         # elitism
         t_elite_start = time.time()
         ELITE_COUNT = int(PARAMETERS["elitism_rate"])
@@ -85,10 +96,13 @@ if __name__ == "__main__":
         t_gen_end = time.time()
         print(f"Generation {generation} took {t_gen_end - t_gen_start:.2f} seconds.\n")
 
+    t_training_end = time.time()
+    print(f"Total training time: {t_training_end - t_setup_start:.2f} seconds.")
     print("The process is completed")
     print("Elapsed generations: ", generation)
     print(average_fitness_history)
-    
+    plot_average_and_max_fitness_history(average_fitness_history, max_fitness_history)
+
     # extract best model after evolution
     best_fitness, best_tree = max_fitness(fitness_scores, population)
 
