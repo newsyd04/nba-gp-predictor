@@ -12,17 +12,27 @@ def fitness(individual: Tree, target_outputs: list[int], data: list[list[float]]
     predictions = get_predictions(individual, data, variables)
     t_predictions_end = time.time()
     t_predictions_duration = t_predictions_end - t_predictions_start
+
     t_loss_start = time.time()
     loss = cross_entropy_loss(predictions, target_outputs)
     t_loss_end = time.time()
     t_loss_duration = t_loss_end - t_loss_start
-    return _fitness(loss, t_predictions_duration, t_loss_duration)
+
+    # tree size penalty
+    size = individual.size()
+
+    return _fitness(loss, t_predictions_duration, t_loss_duration, size)
 
 def get_predictions(tree: Tree, data: list[list[float]], variables: list[str]) -> list[float]:
     predictions = []
     var_index = {var: i for i, var in enumerate(variables)}
     for row in data:
         raw_output = evaluate_tree(tree.root, row, var_index)
+
+        # clamp + scale before squashing
+        raw_output = max(min(raw_output, 10), -10)
+        raw_output /= 10
+
         probability = sigmoid(raw_output)
         predictions.append(probability)
     return predictions
@@ -34,7 +44,8 @@ def sigmoid(x: float) -> float:
     # prevents underflow for large negative x
     if x < -50:
         return 0.0
-    return 1 / (1 + math.exp(-x))
+    # smooth squashing to (0, 1)
+    return (math.tanh(x) + 1) / 2
 
 # -1/N summation(y*log(p) + (1-y)*log(1-p))
 def cross_entropy_loss(predictions: list[float], targets: list[float]) -> float:
@@ -48,8 +59,19 @@ def cross_entropy_loss(predictions: list[float], targets: list[float]) -> float:
         total += -(y * math.log(p) + (1 - y) * math.log(1 - p))
     return total / len(predictions)
 
-def _fitness(loss: float, prediction_time: float, loss_time: float) -> tuple[float, float, float]:
-    return 1 / (1 + loss), prediction_time, loss_time
+def _fitness(loss: float, prediction_time: float, loss_time: float, size: int) -> tuple[float, float, float]:
+    """
+    Base fitness from loss, then penalise large trees.
+    fitness = exp(-loss) * 1 / (1 + alpha * size)
+    """
+    base = math.exp(-loss)
+
+    # bloat penalty: tune alpha if needed
+    alpha = 0.0005
+    penalty = 1 / (1 + alpha * (size ** 0.7))
+
+    fitness_value = base * penalty
+    return fitness_value, prediction_time, loss_time
 
 def average_fitness(fitness_scores: list[float], population: list[Tree]) -> float:
     return sum(fitness_scores) / len(population)
@@ -79,10 +101,26 @@ def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -
         else:
             return value
 
+    op = node.value
+    
+    if op in ["abs(x)", "log(|x| + 1)", "tanh", "relu"]:
+        x = evaluate_tree(node.left, row, var_index)
+
+        try:
+            if op == "abs(x)":
+                return abs(x)
+            elif op == "log(|x| + 1)":
+                return math.log(abs(x) + 1)
+            elif op == "tanh":
+                return math.tanh(x)
+            elif op == "relu":
+                return x if x > 0 else 0
+        except:
+            return 0
+        
     left_value = evaluate_tree(node.left, row, var_index)
     right_value = evaluate_tree(node.right, row, var_index)
 
-    op = node.value
     try:
         if op == '+':
             return left_value + right_value
@@ -91,7 +129,7 @@ def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -
         elif op == '*':
             return left_value * right_value
         elif op == '/':
-            return left_value / right_value if right_value != 0 else 1 # avoid continuous division by zero
+            return left_value / right_value if right_value != 0 else 1  # avoid continuous division by zero
         else:
             raise ValueError(f"Unknown operator: {op}")
 

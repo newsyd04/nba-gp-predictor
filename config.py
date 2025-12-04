@@ -4,8 +4,9 @@ PARAMETERS = {
     "max_generations": 100,
     "selection_method": "roulette",
     "crossover_rate": 0.9,
-    "mutation_rate": 0.05,
-    "elitism_rate": 5
+    "mutation_rate": 0.1,
+    "elitism_rate": 5,
+    "max_tree_height": 8
 }
 
 # ---- FEATURE DEFINITIONS ----
@@ -26,5 +27,5 @@ TEST_SEASON   = 2025
 
 TABLE_PATH = "data/*/*_table1.csv"
 
-OPERATIONS = ['+', '-', '*', '/']
+OPERATIONS = ['+', '-', '*', '/', 'abs(x)', 'log(|x| + 1)', 'tanh', 'relu']
 TERMINALS = ['var', 'const']

@@ -1,6 +1,8 @@
 import random
 import copy
 from tree.tree import Tree
+import config
+from config import PARAMETERS
 
 def should_apply_crossover(crossover_rate=1.0) -> bool:
 	return random.random() <= crossover_rate
@@ -11,14 +13,19 @@ def choose_parents(parents_pool: list[Tree]) -> tuple[Tree, Tree]:
 	return mrParent, msParent
 
 def crossover(mrParent: Tree, msParent: Tree) -> tuple[Tree, Tree]:
-    awesomeSon  = copy.deepcopy(mrParent)
-    greatDaughter  = copy.deepcopy(msParent)
+    awesomeSon = copy.deepcopy(mrParent)
+    greatDaughter = copy.deepcopy(msParent)
+    
+    max_depth_allowed = PARAMETERS["max_tree_height"]
 
     node1 = awesomeSon.random_node()
     node2 = greatDaughter.random_node()
 
     parent1 = awesomeSon.find_parent(node1)
     parent2 = greatDaughter.find_parent(node2)
+    
+    old_node1 = copy.deepcopy(node1)
+    old_node2 = copy.deepcopy(node2)
 
     if parent1 is None:
         awesomeSon.root = node2
@@ -35,6 +42,24 @@ def crossover(mrParent: Tree, msParent: Tree) -> tuple[Tree, Tree]:
             parent2.left = node1
         else:
             parent2.right = node1
+            
+    if awesomeSon.depth() > max_depth_allowed:
+        if parent1 is None:
+            awesomeSon.root = old_node1
+        else:
+            if parent1.left is node2:
+                parent1.left = old_node1
+            else:
+                parent1.right = old_node1
+
+    if greatDaughter.depth() > max_depth_allowed:
+        if parent2 is None:
+            greatDaughter.root = old_node2
+        else:
+            if parent2.left is node1:
+                parent2.left = old_node2
+            else:
+                parent2.right = old_node2
 
     return awesomeSon, greatDaughter
 

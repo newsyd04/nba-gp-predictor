@@ -2,6 +2,9 @@ import random
 from tree.tree_node import TreeNode
 from config import OPERATIONS, TERMINALS, ROLLING_COLUMNS
 
+UNARY_OPS = ["abs(x)", "log(|x| + 1)", "tanh", "relu"]
+BINARY_OPS = ['+', '-', '*', '/']
+
 class Tree:
     def __init__(self, node_value=None, current_depth=1, variables=None):
         self.root = TreeNode(node_value, current_depth=current_depth)
@@ -15,6 +18,10 @@ class Tree:
             return ""
         if node.is_leaf():
             return str(node.value)
+        
+        if node.value in UNARY_OPS:
+            return f"{node.value.replace('(x)', '')}({self._to_string_helper(node.left)})"
+
         left_str = self._to_string_helper(node.left)
         right_str = self._to_string_helper(node.right)
         return f"({left_str}{node.value}{right_str})"
@@ -57,17 +64,25 @@ class Tree:
 
     def _grow(self, node: TreeNode, current_depth: int, max_depth: int):
         if current_depth < max_depth and random.random() < 0.7:
-                node.value = random.choice(OPERATIONS)
+            op = random.choice(OPERATIONS)
+            node.value = op
+
+            if op in UNARY_OPS:
+                node.left = TreeNode(None, current_depth + 1)
+                node.right = None
+                self._grow(node.left, current_depth + 1, max_depth)
+            else:  # binary
                 node.left = TreeNode(None, current_depth + 1)
                 node.right = TreeNode(None, current_depth + 1)
                 self._grow(node.left, current_depth + 1, max_depth)
                 self._grow(node.right, current_depth + 1, max_depth)
+            return
+
+        choice = random.choice(TERMINALS)
+        if choice == 'var':
+            node.value = random.choice(self.variables)
         else:
-            choice = random.choice(TERMINALS)
-            if choice == 'var':
-                node.value = random.choice(self.variables)
-            else:
-                node.value = round(random.uniform(-10, 10), 2)
+            node.value = round(random.uniform(-10, 10), 2)
 
     def full(self, max_depth: int):
         self.root = TreeNode(None, current_depth=1)
@@ -75,14 +90,36 @@ class Tree:
 
     def _full(self, node: TreeNode, current_depth: int, max_depth: int):
         if current_depth < max_depth:
-            node.value = random.choice(OPERATIONS)
-            node.left = TreeNode(None, current_depth + 1)
-            node.right = TreeNode(None, current_depth + 1)
-            self._full(node.left, current_depth + 1, max_depth)
-            self._full(node.right, current_depth + 1, max_depth)
+            op = random.choice(OPERATIONS)
+            node.value = op
+
+            if op in UNARY_OPS:
+                node.left = TreeNode(None, current_depth + 1)
+                node.right = None
+                self._full(node.left, current_depth + 1, max_depth)
+            else:
+                node.left = TreeNode(None, current_depth + 1)
+                node.right = TreeNode(None, current_depth + 1)
+                self._full(node.left, current_depth + 1, max_depth)
+                self._full(node.right, current_depth + 1, max_depth)
         else:
             choice = random.choice(TERMINALS)
             if choice == 'var':
                 node.value = random.choice(self.variables)
             else:
                 node.value = round(random.uniform(-10, 10), 2)
+                
+    def size(self) -> int:
+        return len(self._collect_nodes(self.root))
+
+    def depth(self) -> int:
+        return self._compute_depth(self.root)
+
+    def _compute_depth(self, node: TreeNode):
+        if node is None:
+            return 0
+        if node.is_leaf():
+            return node.current_depth
+        return max(self._compute_depth(node.left),
+                   self._compute_depth(node.right))
+

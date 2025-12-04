@@ -2,37 +2,70 @@ import random
 import copy
 from tree.tree import Tree
 
+
 def should_mutate(mutation_rate=0.1) -> bool:
     return random.random() <= mutation_rate
 
 
 def mutate(individual: Tree, max_depth=3) -> Tree:
     """
-    Replace a random subtree with a newly grown subtree using the SAME VARIABLES
-    as the original tree.
+    Improved mutation:
+    - 70% chance: small local mutation (operator / constant / variable)
+    - 30% chance: subtree replacement (your original behavior)
     """
     mutant = copy.deepcopy(individual)
 
+    # Choose a random node
     node = mutant.random_node()
-    current_depth = node.current_depth
 
-    # ensure subtree stays within allowed depth
-    allowed_remaining = max_depth - current_depth
+    # --- LEAF MUTATIONS (micro-mutation) ---
+    if node.is_leaf():
+        r = random.random()
+
+        # 40% chance: tweak constant slightly
+        if isinstance(node.value, (int, float)) and r < 0.40:
+            node.value += round(random.uniform(-1.5, 1.5), 2)
+            return mutant
+
+        # 40% chance: switch variable
+        if isinstance(node.value, str) and r < 0.80:
+            node.value = random.choice(individual.variables)
+            return mutant
+
+        # 20% chance: replace leaf entirely
+        # (similar to your original terminate-branch behavior)
+        node.value = (
+            random.choice(individual.variables)
+            if random.random() < 0.5
+            else round(random.uniform(-10, 10), 2)
+        )
+        return mutant
+
+    # --- INTERNAL NODE MUTATIONS (micro-mutation) ---
+    # 40%: replace operator only
+    if random.random() < 0.40:
+        from config import OPERATIONS
+        node.value = random.choice(OPERATIONS)
+        return mutant
+
+    # --- STRUCTURAL MUTATION (macro-mutation, your original behavior) ---
+    # Replace subtree, but avoid giant random trees
+    # Keep it small and controlled
+    allowed_remaining = max_depth - node.current_depth
     if allowed_remaining < 1:
         allowed_remaining = 1
 
-    # pass variables into new subtree
     new_subtree = Tree(
         variables=individual.variables,
-        current_depth=current_depth
+        current_depth=node.current_depth
     )
 
     new_subtree.grow(
-        max_depth=current_depth + allowed_remaining,
-        current_depth=current_depth
+        max_depth=node.current_depth + allowed_remaining,
+        current_depth=node.current_depth
     )
 
-    # structurally replace node
+    # Replace entire subtree
     node.value = new_subtree.root.value
     node.left = new_subtree.root.left
     node.right = new_subtree.root.right
@@ -42,7 +75,7 @@ def mutate(individual: Tree, max_depth=3) -> Tree:
 
 def run_mutations(children: list[Tree], max_depth: int, mutation_rate=0.1) -> list[Tree]:
     """
-    Apply mutation independently to each child.
+    Same structure as original: apply mutation independently to each child.
     """
     mutated = []
 
