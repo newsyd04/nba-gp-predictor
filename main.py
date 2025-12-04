@@ -6,7 +6,7 @@ from config import PARAMETERS, TABLE_PATH
 from data_loader import load_nba_data
 from population import make_population
 from fitness import fitness_worker, average_fitness, max_fitness, get_predictions, get_population_sorted_by_fitness, cross_entropy_loss
-from selection.roulette import RouletteSelection
+from selection.roulette import TournamentSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
 from plot_results import plot_average_and_max_fitness_history
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
         # selection
         t_operations_start = time.time()
-        selector = RouletteSelection()
+        selector = TournamentSelection()
         parents = selector.create_parents_pool(population, fitness_scores)
 
         # crossover

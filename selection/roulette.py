@@ -3,9 +3,6 @@ from selection.selection_interface import ISelection
 from tree.tree import Tree
 
 class RouletteSelection(ISelection):
-    def __init__(self, tournament_size: int = 3):
-        self.tournament_size = tournament_size
-
     def create_parents_pool(self, population: list[Tree], fitness_scores: list[float]) -> list[Tree]:
         if len(population) != len(fitness_scores):
             raise ValueError("Population and fitness scores must have the same length.")
@@ -14,16 +11,29 @@ class RouletteSelection(ISelection):
             return []
 
         parents_pool = []
-        pop_with_fitness = list(zip(population, fitness_scores))
-
+        wheel = self._make_wheel(population, fitness_scores)
         for _ in population:
-            parent = self._select_one(pop_with_fitness)
+            parent = self._select_one(wheel)
             parents_pool.append(parent)
-
         return parents_pool
 
-    def _select_one(self, pop_with_fitness: list[tuple[Tree, float]]) -> Tree:
-        """Tournament selection: choose k at random, pick the best."""
-        tournament = random.sample(pop_with_fitness, self.tournament_size)
-        winner, _ = max(tournament, key=lambda x: x[1])
-        return winner
+    def _make_wheel(self, population: list[Tree], fitness_scores: list[float]) -> list[tuple[Tree, float]]:
+        total = sum(fitness_scores)
+
+        if total == 0:
+            prob = 1 / len(population)
+            return [(individual, prob) for individual in population]
+
+        wheel = [(individual, fitness/total) for individual, fitness in zip(population, fitness_scores)]
+
+        return wheel
+
+    def _select_one(self, wheel: list[tuple[Tree, float]]) -> Tree:
+        r = random.random()
+        cumulative = 0.0
+        for individual, prob in wheel:
+            cumulative += prob
+            if r <= cumulative:
+                return individual
+
+        return wheel[-1][0]
