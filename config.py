@@ -1,12 +1,11 @@
 PARAMETERS = {
     "population_size": 150,
-    "max_tree_height": 6,
+    "max_tree_height": 8,
     "max_generations": 100,
     "selection_method": "roulette",
     "crossover_rate": 0.9,
     "mutation_rate": 0.1,
     "elitism_rate": 5,
-    "max_tree_height": 8
 }
 
 # ---- FEATURE DEFINITIONS ----
