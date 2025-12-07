@@ -28,7 +28,8 @@ def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = Non
     stats.rename(columns={
         "gameId": "GAME_ID",
         "teamId": "TEAM_ID",
-        "teamTricode": "TEAM_ABBREVIATION"
+        "teamTricode": "TEAM_ABBREVIATION",
+        "wl": "WL"
     }, inplace=True)
 
     # build wl lookup table
@@ -63,9 +64,6 @@ def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = Non
     stats["WL"] = stats.apply(lookup, axis=1)
     stats["won"] = stats["WL"].map({"W": 1, "L": 0})
 
-    if out_csv:
-        stats.to_csv(out_csv, index=False)
-
     # rename columns back to original
     stats.rename(columns={
         "GAME_ID": "gameId",
@@ -73,6 +71,9 @@ def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = Non
         "TEAM_ABBREVIATION": "teamTricode",
         "WL": "wl"
     }, inplace=True)
+
+    if out_csv:
+        stats.to_csv(out_csv, index=False)
 
     return stats
 
@@ -167,11 +168,11 @@ def _print_correlations_with_win(df: pd.DataFrame, title: str) -> None:
     print(correlation)
 
 if __name__ == "__main__":
-    # run_type = "add_wl"
+    run_type = "add_wl"
     # run_type = "build_team_csvs"
     # run_type = "plot_correlation_per_season"
     # run_type = "plot_correlation_combined"
-    run_type = "print_correlation_combined"
+    # run_type = "print_correlation_combined"
     seasons = get_recent_seasons(NUM_SEASONS, include_current=INCLUDE_CURRENT_SEASON)
     stats_csvs = [f"{OUT_DIR}/{season}/{season}_table1.csv" for season in seasons]
     if run_type == "add_wl":
