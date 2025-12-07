@@ -2,10 +2,8 @@ import random
 import copy
 from tree.tree import Tree
 
-
 def should_mutate(mutation_rate=0.1) -> bool:
     return random.random() <= mutation_rate
-
 
 def mutate(individual: Tree, max_depth=3) -> Tree:
     """
@@ -71,7 +69,6 @@ def mutate(individual: Tree, max_depth=3) -> Tree:
     node.right = new_subtree.root.right
 
     return mutant
-
 
 def run_mutations(children: list[Tree], max_depth: int, mutation_rate=0.1) -> list[Tree]:
     """

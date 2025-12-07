@@ -66,7 +66,7 @@ def _fitness(loss: float, prediction_time: float, loss_time: float, size: int) -
     """
     base = math.exp(-loss)
 
-    # bloat penalty: tune alpha if needed
+    # bloat penalty
     alpha = 0.0005
     penalty = 1 / (1 + alpha * (size ** 0.7))
 
@@ -102,7 +102,7 @@ def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -
             return value
 
     op = node.value
-    
+
     if op in ["abs(x)", "log(|x| + 1)", "tanh", "relu"]:
         x = evaluate_tree(node.left, row, var_index)
 
@@ -117,7 +117,7 @@ def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -
                 return x if x > 0 else 0
         except:
             return 0
-        
+
     left_value = evaluate_tree(node.left, row, var_index)
     right_value = evaluate_tree(node.right, row, var_index)
 
