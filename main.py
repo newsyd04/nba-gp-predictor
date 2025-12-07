@@ -9,7 +9,7 @@ from fitness import fitness_worker, average_fitness, max_fitness, get_prediction
 from selection.tournament import TournamentSelection
 from evolve.crossover import run_crossover
 from evolve.mutation import run_mutations
-from plot_results import plot_average_and_max_fitness_history
+from plot_results import plot_average_and_max_fitness_history, plot_roc_auc_for_test_results
 
 if __name__ == "__main__":
     t_setup_start = time.time()
@@ -118,3 +118,4 @@ if __name__ == "__main__":
     print("Test loss:", test_loss)
     print("Test accuracy:", test_accuracy)
     print("Best Tree Expression:", best_tree.to_string())
+    plot_roc_auc_for_test_results(test_preds, test_targets)
