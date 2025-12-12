@@ -26,7 +26,9 @@ class TournamentSelection(ISelection):
     
     # Tournament selection: choose k at random, pick the best.
     def _select_one(self, pop_with_fitness: list[tuple[Tree, float]]) -> Tree:
-        """Tournament selection: choose k at random, pick the best."""
+        """
+        Tournament selection: choose k at random, pick the best.
+        """
         tournament = random.sample(pop_with_fitness, self.tournament_size)
         winner, _ = max(tournament, key=lambda x: x[1])
         return winner

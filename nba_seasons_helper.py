@@ -12,7 +12,7 @@ def add_wl_column_from_games(stats_csv: list[str], games_csv: list[str], out_csv
 
 def _add_wl_column_from_games(stats_csv: str, games_csv: str, out_csv: str = None) -> pd.DataFrame:
     """
-    Adds a WL column ('W' | 'L') and 'won' column (1 | 0) to your advanced team stats for a season.
+    Adds a WL column ('W' | 'L') and 'won' column (1 | 0) to the advanced team stats for a season.
     """
     stats = pd.read_csv(stats_csv, dtype=str)
     games = pd.read_csv(games_csv, dtype=str)

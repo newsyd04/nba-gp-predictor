@@ -15,7 +15,7 @@ def get_recent_seasons(num_seasons=3, include_current=True) -> list[str]:
     """
     Returns a list of recent NBA season strings in "YYYY-YY" format, e.g., "2024-25".
     NBA season is referenced by the starting year, 2024-2025 -> "2024-25".
-    Determine current season start year: if month >= 10 (Oct) we are in the season starting this calendar year.
+    Determine current season start year: if month >= 10 (Oct) it is in the season starting this calendar year.
     """
     today = date.today()
     year = today.year
