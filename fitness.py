@@ -3,10 +3,12 @@ import time
 from tree.tree import Tree
 from tree.tree_node import TreeNode
 
+# Evaluates the fitness of an individual tree
 def fitness_worker(args: tuple[Tree, list[int], list[list[float]], list[str]]) -> tuple[float, float, float]:
     individual, train_target_outputs, train_data, variables = args
     return fitness(individual, train_target_outputs, train_data, variables)
 
+# Calculates fitness, prediction time, and loss time for an individual
 def fitness(individual: Tree, target_outputs: list[int], data: list[list[float]], variables: list[str]) -> tuple[float, float, float]:
     t_predictions_start = time.time()
     predictions = get_predictions(individual, data, variables)
@@ -23,6 +25,7 @@ def fitness(individual: Tree, target_outputs: list[int], data: list[list[float]]
 
     return _fitness(loss, t_predictions_duration, t_loss_duration, size)
 
+# Generates predictions for the given data using the provided tree
 def get_predictions(tree: Tree, data: list[list[float]], variables: list[str]) -> list[float]:
     predictions = []
     var_index = {var: i for i, var in enumerate(variables)}
@@ -59,6 +62,7 @@ def cross_entropy_loss(predictions: list[float], targets: list[float]) -> float:
         total += -(y * math.log(p) + (1 - y) * math.log(1 - p))
     return total / len(predictions)
 
+# Calculates the fitness value with a penalty for tree size
 def _fitness(loss: float, prediction_time: float, loss_time: float, size: int) -> tuple[float, float, float]:
     """
     Base fitness from loss, then penalise large trees.
@@ -73,9 +77,11 @@ def _fitness(loss: float, prediction_time: float, loss_time: float, size: int) -
     fitness_value = base * penalty
     return fitness_value, prediction_time, loss_time
 
+# Computes the average fitness of the population
 def average_fitness(fitness_scores: list[float], population: list[Tree]) -> float:
     return sum(fitness_scores) / len(population)
 
+# Finds the maximum fitness and corresponding individual in the population
 def max_fitness(fitness_scores: list[float], population: list[Tree]) -> tuple[float, Tree | None]:
     max_fit, max_individual = float('-inf'), None
     for score, individual in zip(fitness_scores, population):
@@ -84,11 +90,13 @@ def max_fitness(fitness_scores: list[float], population: list[Tree]) -> tuple[fl
             max_individual = individual
     return max_fit, max_individual
 
+# Returns the population sorted by fitness in descending order
 def get_population_sorted_by_fitness(population: list[Tree], fitness_scores: list[float]) -> list[tuple[Tree, float]]:
     paired = list(zip(population, fitness_scores))
     paired.sort(key=lambda x: x[1], reverse=True)
     return paired
 
+# Recursively evaluates the tree for a given data row
 def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -> float:
     if node is None:
         return 0
@@ -103,6 +111,7 @@ def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -
 
     op = node.value
 
+    # Handle unary operations
     if op in ["abs(x)", "log(|x| + 1)", "tanh", "relu"]:
         x = evaluate_tree(node.left, row, var_index)
 
@@ -118,6 +127,7 @@ def evaluate_tree(node: TreeNode, row: list[float], var_index: dict[str, int]) -
         except:
             return 0
 
+    # Handle binary operations   
     left_value = evaluate_tree(node.left, row, var_index)
     right_value = evaluate_tree(node.right, row, var_index)
 

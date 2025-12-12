@@ -2,6 +2,7 @@ import glob
 import pandas as pd
 from config import ROLLING_COLUMNS, TRAIN_SEASONS, TRAIN_CURRENT, TEST_SEASON
 
+# Loads all seasons data and processes it for training and testing
 def load_all_games_data(path: str) -> pd.DataFrame:
     """
     Loads all games data from all seasons' CSV files and returns a time ordered DataFrame. 
@@ -20,6 +21,7 @@ def load_all_games_data(path: str) -> pd.DataFrame:
 
     return df
 
+# Adds last 10 rolling mean features
 def add_last_10_features(df: pd.DataFrame, rolling_columns: list[str]) -> pd.DataFrame:
     """
     Adds last 10 rolling mean features.
@@ -31,6 +33,7 @@ def add_last_10_features(df: pd.DataFrame, rolling_columns: list[str]) -> pd.Dat
 
     return df
 
+# Adds 3 year rolling mean features
 def add_3_year_features(df: pd.DataFrame, rolling_columns: list[str]) -> pd.DataFrame:
     """
     Adds 3 season rolling mean features.
@@ -49,6 +52,7 @@ def add_3_year_features(df: pd.DataFrame, rolling_columns: list[str]) -> pd.Data
     df = pd.concat(df_3_year).sort_values(["teamId", "seasonNumber", "gameId"])
     return df
 
+# Enforces minimum games played to have last 10 games
 def enforce_min_games(df: pd.DataFrame, min_games: int = 10) -> pd.DataFrame:
     """
     Removes rows that do not have enough past games to form last 10.
@@ -56,6 +60,7 @@ def enforce_min_games(df: pd.DataFrame, min_games: int = 10) -> pd.DataFrame:
     df["games_played"] = df.groupby(["teamId", "seasonNumber"]).cumcount()
     return df[df["games_played"] >= min_games].reset_index(drop=True)
 
+# Splits data into train and test sets by season
 def split_train_test_by_season(df: pd.DataFrame, train_seasons: list[int], train_current: int, test_season: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Makes a train test split.
@@ -65,6 +70,7 @@ def split_train_test_by_season(df: pd.DataFrame, train_seasons: list[int], train
 
     return train_df, test_df
 
+# Builds match rows from team rows
 def build_matches(df: pd.DataFrame, feature_columns: list[str]) -> pd.DataFrame:
     """
     Converts team rows into Team A vs Team B matches rows.
@@ -83,6 +89,7 @@ def build_matches(df: pd.DataFrame, feature_columns: list[str]) -> pd.DataFrame:
 
     return match
 
+# Builds delta features for both last 10 and 3 year.
 def build_delta_features(matches: pd.DataFrame, rolling_columns: list[str]) -> tuple[pd.DataFrame, list[str]]:
     """
     Builds delta features for both last 10 and 3 year.
@@ -99,6 +106,7 @@ def build_delta_features(matches: pd.DataFrame, rolling_columns: list[str]) -> t
 
     return matches, delta_columns
 
+# Builds the final matrix tables for training and testing
 def build_matrix_tables(train_matches: pd.DataFrame, test_matches: pd.DataFrame, delta_columns: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Returns X and y for training and testing.
@@ -114,6 +122,7 @@ def build_matrix_tables(train_matches: pd.DataFrame, test_matches: pd.DataFrame,
 
     return train, test
 
+# Loads NBA data and processes it into train and test sets
 def load_nba_data(seasons_path: str) -> tuple[list[str], list, list]:
     """
     Converts the raw nba data into train and test sets.

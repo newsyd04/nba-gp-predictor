@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 
+# Plots the average and maximum fitness history over generations.
 def plot_average_and_max_fitness_history(average_fitness_history: list, max_fitness_history: list) -> None:
     os.makedirs("results", exist_ok=True)
 
@@ -16,6 +17,7 @@ def plot_average_and_max_fitness_history(average_fitness_history: list, max_fitn
     plt.show()
     plt.close()
 
+# Plots the ROC curve and calculates AUC for test results.
 def plot_roc_auc_for_test_results(predictions: list[float], targets: list[int]) -> None:
     """
     Plots the ROC (Receiver Operating Characteristic) curve and calculates the AUC (Area Under Curve) for test results.

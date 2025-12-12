@@ -9,7 +9,7 @@ def mutate(individual: Tree, max_depth=3) -> Tree:
     """
     Improved mutation:
     - 70% chance: small local mutation (operator / constant / variable)
-    - 30% chance: subtree replacement (your original behavior)
+    - 30% chance: subtree replacement
     """
     mutant = copy.deepcopy(individual)
 
@@ -31,7 +31,6 @@ def mutate(individual: Tree, max_depth=3) -> Tree:
             return mutant
 
         # 20% chance: replace leaf entirely
-        # (similar to your original terminate-branch behavior)
         node.value = (
             random.choice(individual.variables)
             if random.random() < 0.5
@@ -46,7 +45,7 @@ def mutate(individual: Tree, max_depth=3) -> Tree:
         node.value = random.choice(OPERATIONS)
         return mutant
 
-    # --- STRUCTURAL MUTATION (macro-mutation, your original behavior) ---
+    # --- STRUCTURAL MUTATION (macro-mutation) ---
     # Replace subtree, but avoid giant random trees
     # Keep it small and controlled
     allowed_remaining = max_depth - node.current_depth
@@ -70,10 +69,8 @@ def mutate(individual: Tree, max_depth=3) -> Tree:
 
     return mutant
 
+# Runs mutations on a list of children based on mutation rate
 def run_mutations(children: list[Tree], max_depth: int, mutation_rate=0.1) -> list[Tree]:
-    """
-    Same structure as original: apply mutation independently to each child.
-    """
     mutated = []
 
     for child in children:

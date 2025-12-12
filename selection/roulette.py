@@ -2,7 +2,9 @@ import random
 from selection.selection_interface import ISelection
 from tree.tree import Tree
 
+# Implements roulette wheel selection for genetic programming
 class RouletteSelection(ISelection):
+    # Creates a parents pool using roulette wheel selection
     def create_parents_pool(self, population: list[Tree], fitness_scores: list[float]) -> list[Tree]:
         if len(population) != len(fitness_scores):
             raise ValueError("Population and fitness scores must have the same length.")
@@ -17,6 +19,7 @@ class RouletteSelection(ISelection):
             parents_pool.append(parent)
         return parents_pool
 
+    # Constructs the roulette wheel based on fitness scores
     def _make_wheel(self, population: list[Tree], fitness_scores: list[float]) -> list[tuple[Tree, float]]:
         total = sum(fitness_scores)
 
@@ -28,6 +31,7 @@ class RouletteSelection(ISelection):
 
         return wheel
 
+    # Selects one individual from the wheel based on probabilities
     def _select_one(self, wheel: list[tuple[Tree, float]]) -> Tree:
         r = random.random()
         cumulative = 0.0

@@ -3,6 +3,7 @@ from tree.tree import Tree
 def make_population(size: int, max_tree_height: int, variables: list[str]) -> list:
     population = []
 
+    # Distributes tree heights evenly across the population
     base = size // max_tree_height
     remainder = size % max_tree_height
 

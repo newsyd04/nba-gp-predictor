@@ -2,6 +2,7 @@ import random
 from tree.tree_node import TreeNode
 from config import OPERATIONS, TERMINALS, ROLLING_COLUMNS
 
+# Define unary and binary operations
 UNARY_OPS = ["abs(x)", "log(|x| + 1)", "tanh", "relu"]
 BINARY_OPS = ['+', '-', '*', '/']
 
@@ -122,4 +123,3 @@ class Tree:
             return node.current_depth
         return max(self._compute_depth(node.left),
                    self._compute_depth(node.right))
-

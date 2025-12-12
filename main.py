@@ -30,6 +30,7 @@ if __name__ == "__main__":
     t_setup_end = time.time()
     print(f"Data loading and population initialization took {t_setup_end - t_setup_start:.2f} seconds.")
 
+    # Evolution loop
     for generation in range(1, PARAMETERS["max_generations"] + 1):
         print(f"Generation {generation}")
         t_gen_start = time.time()
